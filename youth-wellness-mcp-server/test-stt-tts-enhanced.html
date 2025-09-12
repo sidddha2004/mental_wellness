@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>STT & TTS Test Page - Enhanced</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        input, button, select, textarea {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 3px;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+        .status {
+            font-weight: bold;
+            color: #2196F3;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        audio {
+            width: 100%;
+            margin: 10px 0;
+            display: block !important;
+        }
+        #audioFile {
+            width: 100%;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #1976d2;
+        }
+        .loading {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .transcription-box {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 15px 0;
+            border: 3px solid #4CAF50;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            box-shadow: 0 2px 5px rgba(76, 175, 80, 0.2);
+            word-wrap: break-word;
+            min-height: 50px;
+        }
+        .file-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 13px;
+            border: 1px solid #cce7ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎙️ Speech-to-Text & Text-to-Speech Test - Enhanced</h1>
+    
+    <!-- Server Status -->
+    <div class="container">
+        <h2>🔌 Server Status</h2>
+        <button onclick="checkServerStatus()">Check Server Connection</button>
+        <div id="serverStatus" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- STT Test - ENHANCED -->
+    <div class="container">
+        <h2>🎤 Speech-to-Text Test (Enhanced)</h2>
+        <div class="info">
+            Upload an audio file (.wav, .mp3, .flac, .webm) to convert speech to text.
+            The transcribed text will be displayed in a large, easy-to-read box below.
+        </div>
+        
+        <div class="file-info">
+            <strong>📁 Select Audio File:</strong><br>
+            <input type="file" id="audioFile" accept="audio/*" onchange="showFileInfo()">
+            <div id="fileInfo" style="margin-top: 10px; color: #666;"></div>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <label><strong>🌐 Language:</strong></label>
+            <select id="sttLanguage">
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="es-ES">Spanish</option>
+                <option value="fr-FR">French</option>
+                <option value="de-DE">German</option>
+                <option value="hi-IN">Hindi</option>
+                <option value="zh-CN">Chinese (Mandarin)</option>
+                <option value="ja-JP">Japanese</option>
+                <option value="ko-KR">Korean</option>
+            </select>
+            
+            <label><strong>🎯 Model:</strong></label>
+            <select id="sttModel">
+                <option value="latest_long">Latest Long (recommended for most audio)</option>
+                <option value="latest_short">Latest Short (for short audio clips)</option>
+                <option value="command_and_search">Command & Search (for voice commands)</option>
+                <option value="phone_call">Phone Call (for phone audio)</option>
+            </select>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <label>
+                <input type="checkbox" id="wordTiming"> 
+                <strong>⏱️ Enable Word Timing</strong> (provides timing info for each word)
+            </label>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testSTT()" id="sttButton" style="font-size: 16px; padding: 12px 20px;">🎤 Transcribe Audio</button>
+            <button onclick="getSTTInfo()" id="sttInfoButton">ℹ️ Get STT Info</button>
+        </div>
+        
+        <div id="sttResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- TTS Test -->
+    <div class="container">
+        <h2>🔊 Text-to-Speech Test</h2>
+        <div class="info">
+            Enter any text below and click "Convert to Speech" to hear it spoken aloud.
+        </div>
+        <textarea id="textInput" placeholder="Enter text to speak..." 
+                  style="width: 95%; height: 80px; resize: vertical;">Hello! This is a test of the text to speech functionality. How are you feeling today?</textarea>
+        <br><br>
+        
+        <label>Language:</label>
+        <select id="ttsLanguage">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="es-ES">Spanish (Spain)</option>
+            <option value="fr-FR">French</option>
+            <option value="de-DE">German</option>
+        </select>
+        
+        <label>Voice:</label>
+        <select id="ttsVoice">
+            <option value="en-US-Journey-D">Journey-D (Female)</option>
+            <option value="en-US-Journey-F">Journey-F (Male)</option>
+            <option value="en-US-Wavenet-A">Wavenet-A (Male)</option>
+            <option value="en-US-Wavenet-C">Wavenet-C (Female)</option>
+        </select>
+        
+        <br><br>
+        <button onclick="testTTS()" id="ttsButton">🔊 Convert to Speech</button>
+        <button onclick="getTTSInfo()" id="ttsInfoButton">ℹ️ Get Voice Info</button>
+        
+        <audio id="audioPlayer" controls></audio>
+        <div id="ttsResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:8080';
+
+        // Helper function to show results
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = content;
+            element.className = isError ? 'result error' : 'result';
+            element.style.display = 'block';
+            
+            // Scroll to result
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Helper function to show loading state
+        function showLoading(buttonId, text = 'Loading...') {
+            const button = document.getElementById(buttonId);
+            button.disabled = true;
+            button.textContent = text;
+        }
+
+        // Helper function to hide loading state
+        function hideLoading(buttonId, originalText) {
+            const button = document.getElementById(buttonId);
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+
+        // Show file info when selected
+        function showFileInfo() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            const fileInfo = document.getElementById('fileInfo');
+            
+            if (file) {
+                fileInfo.innerHTML = `
+                    <strong>Selected:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+                    <strong>Type:</strong> ${file.type || 'Unknown'}<br>
+                    <strong>Last Modified:</strong> ${new Date(file.lastModified).toLocaleString()}
+                `;
+                fileInfo.style.color = '#4CAF50';
+            } else {
+                fileInfo.innerHTML = '';
+            }
+        }
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${SERVER_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('serverStatus', `
+                        <div class="status">✅ Server is running perfectly!</div>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Service:</strong> ${data.service}</p>
+                        <p><strong>Server Time:</strong> ${data.timestamp}</p>
+                        <p><strong>Ready for:</strong> Speech-to-Text and Text-to-Speech operations</p>
+                    `);
+                } else {
+                    showResult('serverStatus', `
+                        <div class="status">❌ Server error: ${response.status}</div>
+                        <p>${JSON.stringify(data, null, 2)}</p>
+                    `, true);
+                }
+            } catch (error) {
+                showResult('serverStatus', `
+                    <div class="status">❌ Cannot connect to server</div>
+                    <p>Make sure your server is running on ${SERVER_URL}</p>
+                    <p>Error: ${error.message}</p>
+                `, true);
+            }
+        }
+
+        // ENHANCED STT functionality with better visibility
+        async function testSTT() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            const language = document.getElementById('sttLanguage').value;
+            const model = document.getElementById('sttModel').value;
+            const enableWordTiming = document.getElementById('wordTiming').checked;
+            
+            if (!file) {
+                showResult('sttResult', `
+                    <div class="status">⚠️ No file selected</div>
+                    <p>Please select an audio file to transcribe first.</p>
+                    <p><strong>Supported formats:</strong> .wav, .mp3, .flac, .webm, .ogg</p>
+                `, true);
+                return;
+            }
+
+            showLoading('sttButton', '🔄 Transcribing...');
+            
+            // Show processing status immediately
+            showResult('sttResult', `
+                <div class="status loading">🔄 Processing your audio file...</div>
+                <div class="file-info">
+                    <p><strong>📁 File:</strong> ${file.name}</p>
+                    <p><strong>📏 Size:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+                    <p><strong>📝 Type:</strong> ${file.type || 'Unknown'}</p>
+                    <p><strong>🌐 Language:</strong> ${language}</p>
+                    <p><strong>🎯 Model:</strong> ${model}</p>
+                    <p><strong>⏱️ Word Timing:</strong> ${enableWordTiming ? 'Enabled' : 'Disabled'}</p>
+                </div>
+                <p>🎙️ <strong>Please wait while we convert your speech to text...</strong></p>
+                <p><em>This may take a few seconds depending on the audio length.</em></p>
+            `);
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', file);
+                formData.append('languageCode', language);
+                formData.append('model', model);
+                formData.append('enableWordTimeOffsets', enableWordTiming.toString());
+
+                console.log('📤 Sending STT request:', {
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileType: file.type,
+                    language,
+                    model,
+                    enableWordTiming
+                });
+
+                const response = await fetch(`${SERVER_URL}/api/stt`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📥 STT Response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('📄 STT Result:', result);
+                    
+                    if (result.success && result.transcription && result.transcription.trim()) {
+                        showResult('sttResult', `
+                            <div class="status">✅ Speech-to-Text Successful!</div>
+                            
+                            <h3 style="color: #4CAF50; margin: 20px 0 15px 0; font-size: 20px;">
+                                📝 Your Transcribed Text:
+                            </h3>
+                            
+                            <div class="transcription-box">
+                                <div style="font-size: 16px; color: #666; margin-bottom: 10px;">
+                                    💬 <em>What we heard:</em>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 500; color: #2E7D32;">
+                                    "${result.transcription.trim()}"
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
+                                <h4 style="margin-top: 0; color: #4CAF50;">📊 Transcription Details:</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div><strong>📁 Original File:</strong><br>${result.fileName}</div>
+                                    <div><strong>📏 File Size:</strong><br>${(result.fileSize / 1024).toFixed(2)} KB</div>
+                                    <div><strong>🌐 Language:</strong><br>${result.options.languageCode}</div>
+                                    <div><strong>🎯 Model Used:</strong><br>${result.options.model}</div>
+                                    <div><strong>📝 Text Length:</strong><br>${result.transcription.length} characters</div>
+                                    <div><strong>🔤 Word Count:</strong><br>~${result.transcription.split(' ').length} words</div>
+                                </div>
+                                ${result.options.enableWordTimeOffsets ? '<p style="margin-top: 10px;"><strong>⏱️ Word timing:</strong> Enabled (available in advanced results)</p>' : ''}
+                                
+                                <div style="margin-top: 15px; padding: 10px; background: #e8f5e8; border-radius: 5px;">
+                                    <strong>💡 Tip:</strong> You can copy this text by selecting it above!
+                                </div>
+                            </div>
+                        `);
+                    } else if (result.success && (!result.transcription || !result.transcription.trim())) {
+                        showResult('sttResult', `
+                            <div class="status">⚠️ No speech detected in audio</div>
+                            <div class="transcription-box" style="border-color: #ff9800; background: #fff3e0;">
+                                <div style="text-align: center; color: #f57c00;">
+                                    🔇 <strong>No speech found in the audio file</strong>
+                                </div>
+                            </div>
+                            <p><strong>Possible reasons:</strong></p>
+                            <ul>
+                                <li>🔉 Audio might be too quiet or unclear</li>
+                                <li>🌐 Selected language might not match the audio</li>
+                                <li>🎵 Audio might contain only music or noise</li>
+                                <li>📱 Audio format might not be optimal</li>
+                            </ul>
+                            <p><strong>💡 Try these solutions:</strong></p>
+                            <ul>
+                                <li>Use a clearer recording with less background noise</li>
+                                <li>Ensure the language setting matches your audio</li>
+                                <li>Try a different audio file format (WAV works best)</li>
+                                <li>Increase the volume of your recording</li>
+                            </ul>
+                        `, true);
+                    } else {
+                        showResult('sttResult', `
+                            <div class="status">⚠️ Unexpected response format</div>
+                            <p>The server returned a response but it wasn't in the expected format.</p>
+                            <details>
+                                <summary>Raw response (for debugging)</summary>
+                                <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(result, null, 2)}</pre>
+                            </details>
+                        `, true);
+                    }
+                } else {
+                    const responseText = await response.text();
+                    console.error('❌ STT Error response:', responseText);
+                    
+                    let errorMessage;
+                    try {
+                        const errorJson = JSON.parse(responseText);
+                        errorMessage = errorJson.message || errorJson.error || 'Unknown error';
+                    } catch {
+                        errorMessage = responseText || 'Unknown error';
+                    }
+                    
+                    showResult('sttResult', `
+                        <div class="status">❌ Transcription Failed (Error ${response.status})</div>
+                        <div class="transcription-box" style="border-color: #f44336; background: #ffebee;">
+                            <div style="text-align: center; color: #d32f2f;">
+                                ❌ <strong>Error: ${errorMessage}</strong>
+                            </div>
+                        </div>
+                        <p><strong>🔧 Troubleshooting steps:</strong></p>
+                        <ol>
+                            <li>✅ Verify your audio file is valid (.wav, .mp3, .flac, .webm)</li>
+                            <li>📏 Check file size is under 25MB</li>
+                            <li>🔑 Ensure Google Cloud Speech-to-Text credentials are configured</li>
+                            <li>🌐 Try a different language setting</li>
+                            <li>🎯 Try a different model (latest_short for short clips)</li>
+                        </ol>
+                        <details style="margin-top: 15px;">
+                            <summary>🔍 Technical details (for developers)</summary>
+                            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 12px; overflow-x: auto;">${responseText}</pre>
+                        </details>
+                    `, true);
+                }
+            } catch (error) {
+                console.error('💥 STT Request failed:', error);
+                showResult('sttResult', `
+                    <div class="status">❌ Connection Error</div>
+                    <div class="transcription-box" style="border-color: #f44336; background: #ffebee;">
+                        <div style="text-align: center; color: #d32f2f;">
+                            🚫 <strong>Cannot connect to server</strong>
+                        </div>
+                    </div>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>🔧 This usually means:</strong></p>
+                    <ul>
+                        <li>🖥️ Server is not running on ${SERVER_URL}</li>
+                        <li>🌐 Network connection issue</li>
+                        <li>🛡️ CORS or firewall blocking the request</li>
+                        <li>⏰ Request timed out (try smaller audio file)</li>
+                    </ul>
+                    <p><strong>💡 Quick fixes:</strong></p>
+                    <ol>
+                        <li>Check the "Server Status" section above</li>
+                        <li>Open browser console (F12) for more details</li>
+                        <li>Try refreshing the page</li>
+                        <li>Restart your server</li>
+                    </ol>
+                `, true);
+            } finally {
+                hideLoading('sttButton', '🎤 Transcribe Audio');
+            }
+        }
+
+        // Test TTS functionality  
+        async function testTTS() {
+            const text = document.getElementById('textInput').value.trim();
+            const language = document.getElementById('ttsLanguage').value;
+            const voice = document.getElementById('ttsVoice').value;
+            
+            if (!text) {
+                showResult('ttsResult', 'Please enter some text to convert to speech.', true);
+                return;
+            }
+
+            showLoading('ttsButton', '🔄 Converting...');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/tts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        languageCode: language,
+                        voiceName: voice,
+                        audioEncoding: 'MP3',
+                        speakingRate: 1.0,
+                        pitch: 0.0
+                    })
+                });
+
+                if (response.ok) {
+                    const audioBlob = await response.blob();
+                    
+                    if (audioBlob.size > 0) {
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audioPlayer = document.getElementById('audioPlayer');
+                        audioPlayer.src = audioUrl;
+                        audioPlayer.style.display = 'block';
+                        
+                        try {
+                            await audioPlayer.play();
+                        } catch (playError) {
+                            console.log('Auto-play blocked, user needs to click play');
+                        }
+
+                        showResult('ttsResult', `
+                            <div class="status">✅ Text-to-Speech successful!</div>
+                            <p><strong>Audio Generated:</strong> ${(audioBlob.size / 1024).toFixed(2)} KB</p>
+                            <p><strong>Language:</strong> ${language}</p>
+                            <p><strong>Voice:</strong> ${voice}</p>
+                            <p><strong>Text Length:</strong> ${text.length} characters</p>
+                            <p>🎵 <strong>Audio is ready to play above!</strong> Click play if it didn't auto-start.</p>
+                        `);
+                    } else {
+                        showResult('ttsResult', 'Audio was generated but appears to be empty.', true);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    let errorMessage;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.message || errorJson.error || 'Unknown error';
+                    } catch {
+                        errorMessage = errorText || 'Unknown error';
+                    }
+                    
+                    showResult('ttsResult', `
+                        <div class="status">❌ TTS Error: ${response.status}</div>
+                        <p><strong>Error:</strong> ${errorMessage}</p>
+                        <p>Make sure your Google Cloud TTS credentials are properly configured.</p>
+                    `, true);
+                }
+            } catch (error) {
+                showResult('ttsResult', `
+                    <div class="status">❌ Request failed</div>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Make sure the server is running and accessible.</p>
+                `, true);
+            } finally {
+                hideLoading('ttsButton', '🔊 Convert to Speech');
+            }
+        }
+
+        // Get TTS information
+        async function getTTSInfo() {
+            showLoading('ttsInfoButton', '📋 Loading...');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/tts/info`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('ttsResult', `
+                        <div class="status">📋 TTS Information</div>
+                        <p><strong>Supported Languages:</strong> ${data.supportedLanguages.length} languages</p>
+                        <p><strong>Audio Formats:</strong> ${data.audioFormats.map(f => f.format).join(', ')}</p>
+                        <p><strong>Max Text Length:</strong> ${data.maxTextLength} characters</p>
+                        <p><strong>Default Voice:</strong> ${data.defaultVoice}</p>
+                        <p><strong>Sample Rate:</strong> ${data.defaultSampleRate} Hz</p>
+                        <p><strong>SSML Support:</strong> ${data.ssmlSupported ? 'Yes' : 'No'}</p>
+                    `);
+                } else {
+                    showResult('ttsResult', 'Failed to get TTS info', true);
+                }
+            } catch (error) {
+                showResult('ttsResult', `Error: ${error.message}`, true);
+            } finally {
+                hideLoading('ttsInfoButton', 'ℹ️ Get Voice Info');
+            }
+        }
+
+        // Get STT information
+        async function getSTTInfo() {
+            showLoading('sttInfoButton', '📋 Loading...');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/stt/info`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('sttResult', `
+                        <div class="status">📋 STT Information</div>
+                        <p><strong>Supported Languages:</strong> ${data.supportedLanguages.length} languages</p>
+                        <p><strong>Supported Formats:</strong> ${data.supportedFormats.map(f => f.format).join(', ')}</p>
+                        <p><strong>Available Models:</strong> ${data.availableModels.length} models</p>
+                        <p><strong>Max File Size:</strong> ${data.maxFileSizeMB} MB</p>
+                        <details style="margin-top: 10px;">
+                            <summary>Available Models</summary>
+                            <ul>
+                                ${data.availableModels.map(model => `<li><strong>${model.name}:</strong> ${model.description}</li>`).join('')}
+                            </ul>
+                        </details>
+                    `);
+                } else {
+                    showResult('sttResult', 'Failed to get STT info', true);
+                }
+            } catch (error) {
+                showResult('sttResult', `Error: ${error.message}`, true);
+            } finally {
+                hideLoading('sttInfoButton', 'ℹ️ Get STT Info');
+            }
+        }
+
+        // Auto-check server status when page loads
+        window.addEventListener('load', function() {
+            setTimeout(checkServerStatus, 500);
+        });
+
+    </script>
+</body>
+</html>
