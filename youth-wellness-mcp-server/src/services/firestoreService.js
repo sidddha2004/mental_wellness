@@ -10,7 +10,6 @@ class FirestoreService {
 
 }
 
-
   // User operations
   async createUser(userId, userData) {
     try {
