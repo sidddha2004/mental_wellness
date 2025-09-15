@@ -52,6 +52,8 @@ async saveChatMessage(chatId, message) {
       messageCount: Firestore.FieldValue.increment(1)
     }, { merge: true });
 
+    
+
     return { success: true };
   } catch (error) {
     console.error("Firestore error:", error.code, error.message, {

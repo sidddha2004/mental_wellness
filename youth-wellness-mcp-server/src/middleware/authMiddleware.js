@@ -1,17 +1,18 @@
-import jwt from 'jsonwebtoken';
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID
+  });
+}
 
 /**
- * JWT Authentication Middleware
- * Validates JWT tokens in the Authorization header
+ * Firebase Auth Middleware
+ * Validates Firebase ID tokens in the Authorization header
  */
-const authMiddleware = (req, res, next) => {
-  // TEMPORARY: Skip authentication for testing purposes
-  if (process.env.NODE_ENV === 'development' || process.env.SKIP_AUTH === 'true') {
-    console.log('⚠️  Skipping authentication for testing');
-    req.user = { id: 'test-user', email: 'test@example.com' };
-    return next();
-  }
-
+const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
     
@@ -19,13 +20,13 @@ const authMiddleware = (req, res, next) => {
       return res.status(401).json({
         success: false,
         error: 'Access denied',
-        message: 'No valid token provided. Please include "Authorization: Bearer <token>" header'
+        message: 'No valid token provided. Please include "Authorization: Bearer <idToken>" header'
       });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const idToken = authHeader.substring(7); // Remove 'Bearer ' prefix
     
-    if (!token) {
+    if (!idToken) {
       return res.status(401).json({
         success: false,
         error: 'Access denied',
@@ -33,37 +34,24 @@ const authMiddleware = (req, res, next) => {
       });
     }
 
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify the Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
     
     // Add user info to request object
-    req.user = decoded;
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
     
     next();
 
   } catch (error) {
     console.error('Auth middleware error:', error);
     
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token',
-        message: 'The provided token is invalid'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Token expired',
-        message: 'The provided token has expired'
-      });
-    }
-    
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      error: 'Authentication failed',
-      message: 'An error occurred during authentication'
+      error: 'Invalid token',
+      message: 'The provided Firebase ID token is invalid'
     });
   }
 };
@@ -72,7 +60,7 @@ const authMiddleware = (req, res, next) => {
  * Optional Authentication Middleware
  * Similar to authMiddleware but allows requests without tokens
  */
-const optionalAuthMiddleware = (req, res, next) => {
+const optionalAuthMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
     
@@ -82,16 +70,19 @@ const optionalAuthMiddleware = (req, res, next) => {
       return next();
     }
 
-    const token = authHeader.substring(7);
+    const idToken = authHeader.substring(7);
     
-    if (!token) {
+    if (!idToken) {
       req.user = null;
       return next();
     }
 
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    // Verify the Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
     
     next();
 

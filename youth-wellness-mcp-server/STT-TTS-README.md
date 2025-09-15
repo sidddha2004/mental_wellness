@@ -28,7 +28,7 @@ The Youth Wellness MCP Server now supports Speech-to-Text (STT) and Text-to-Spee
    ```env
    GOOGLE_CLOUD_PROJECT_ID=your-project-id
    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account-key.json
-   JWT_SECRET=your-jwt-secret
+   # Note: JWT_SECRET removed - now using Firebase Auth
    ```
 
 ## API Endpoints
