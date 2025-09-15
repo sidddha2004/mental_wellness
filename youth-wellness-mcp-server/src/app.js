@@ -8,7 +8,6 @@ import chatRoutes from "./routes/chatRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 import sttRoutes from "./routes/sttRoutes.js";
 import ttsRoutes from "./routes/ttsRoutes.js";
-// Add diary routes import
 import diaryRoutes from "./routes/diaryRoutes.js";
 
 dotenv.config();
@@ -18,53 +17,45 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// CORS configuration - Allow all origins in development
+// CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'development'
+  ? "*"  // allow all in development
+  : (process.env.ALLOWED_ORIGINS?.split(',') || ["https://exchange-two-blond.vercel.app"]);
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+  origin: function(origin, callback) {
+    // allow requests with no origin (mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
+
+    if (allowedOrigins === "*") return callback(null, true); // dev: allow all
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     
-    // In development, allow all origins
-    if (process.env.NODE_ENV === 'development') {
-      return callback(null, true);
-    }
-    
-    // In production, check allowed origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+  optionsSuccessStatus: 200
 };
 
-app.use(cors({
-  origin: "https://exchange-two-blond.vercel.app/", // external site you want to allow
-  methods: ["GET","POST","PUT","DELETE"],
-  credentials: true // if you need cookies/auth headers
-}));
+app.use(cors(corsOptions));
 
-// Rate limiting configuration (moved up before body parsing)
+// Rate limiting configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     error: 'Too many requests from this IP',
     message: 'Please try again later.',
     retryAfter: '15 minutes'
   },
-  standardHeaders: true, // Return rate limit info in headers
+  standardHeaders: true,
   legacyHeaders: false,
 });
 
 const diaryLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 50, // limit diary operations
+  windowMs: 60 * 60 * 1000,
+  max: 50,
   message: {
     error: 'Too many diary operations',
     message: 'Please try again later.',
@@ -74,27 +65,25 @@ const diaryLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply general rate limiting
+// Apply rate limiting
 app.use(limiter);
 
-// Body parsing middleware (remove duplicate)
+// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files
-app.use(express.static(process.cwd())); // Serve files from project root
-app.use('/outputs', express.static('outputs')); // Serve TTS output files
+app.use(express.static(process.cwd()));
+app.use('/outputs', express.static('outputs'));
 
 // Routes
 app.use('/api/chat', chatRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/stt', sttRoutes);
 app.use('/api/tts', ttsRoutes);
-
-// Diary routes with specific rate limiting
 app.use('/api/diary', diaryLimiter, diaryRoutes);
 
-// Health check endpoint (enhanced)
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
@@ -128,11 +117,10 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Error handling middleware (enhanced)
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error stack:', err.stack);
-  
-  // Handle specific error types
+
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({
       success: false,
@@ -157,7 +145,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Firebase Auth errors
   if (err.code && err.code.startsWith('auth/')) {
     return res.status(401).json({
       success: false,
@@ -166,7 +153,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Default error response
   res.status(err.status || 500).json({
     success: false,
     error: 'Internal server error',
@@ -175,7 +161,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler (enhanced)
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -183,7 +169,7 @@ app.use((req, res) => {
     message: `The endpoint ${req.method} ${req.originalUrl} does not exist`,
     availableEndpoints: [
       '/api/chat',
-      '/api/resources', 
+      '/api/resources',
       '/api/stt',
       '/api/tts',
       '/api/diary',
