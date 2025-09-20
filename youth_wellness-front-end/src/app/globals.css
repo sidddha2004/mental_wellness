@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 28 80% 98%; /* Warm Off-White */
+    --foreground: 210 14% 29%; /* Dark Slate */
+    --card: 28 80% 96%;
+    --card-foreground: 210 14% 29%;
+    --popover: 28 80% 98%;
+    --popover-foreground: 210 14% 29%;
+    --primary: 180 29% 48%; /* Calming Teal */
+    --primary-foreground: 180 30% 98%;
+    --secondary: 180 20% 90%;
+    --secondary-foreground: 180 25% 25%;
+    --muted: 180 20% 94%;
+    --muted-foreground: 208 9% 47%; /* Soft Gray */
+    --accent: 27 100% 77%; /* Soft Peach */
+    --accent-foreground: 210 14% 29%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 208 9% 75%; /* Soft Gray */
+    --input: 208 9% 80%; /* Lighter Soft Gray */
+    --ring: 180 29% 48%; /* Calming Teal */
+    --chart-1: 180 29% 48%;
+    --chart-2: 27 100% 77%;
+    --chart-3: 180 20% 60%;
+    --chart-4: 27 80% 70%;
+    --chart-5: 180 15% 55%;
+    --radius: 0.8rem;
+  }
+
+  .dark {
+    --background: 210 14% 10%;
+    --foreground: 28 80% 95%;
+    --card: 210 14% 13%;
+    --card-foreground: 28 80% 95%;
+    --popover: 210 14% 10%;
+    --popover-foreground: 28 80% 95%;
+    --primary: 180 29% 55%;
+    --primary-foreground: 180 30% 98%;
+    --secondary: 210 10% 20%;
+    --secondary-foreground: 28 80% 95%;
+    --muted: 210 10% 20%;
+    --muted-foreground: 208 9% 60%;
+    --accent: 27 100% 77%;
+    --accent-foreground: 210 14% 15%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 10% 25%;
+    --input: 210 10% 25%;
+    --ring: 180 29% 55%;
+    --chart-1: 180 29% 48%;
+    --chart-2: 27 100% 77%;
+    --chart-3: 180 20% 60%;
+    --chart-4: 27 80% 70%;
+    --chart-5: 180 15% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+    @keyframes pulse-slow {
+        50% {
+            transform: scale(1.1);
+            opacity: 0.5;
+        }
+    }
+    .animate-pulse-slow {
+        animation: pulse-slow 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-slower {
+        50% {
+            transform: scale(1.05);
+            opacity: 0.7;
+        }
+    }
+    .animate-pulse-slower {
+        animation: pulse-slower 5s cubic-bezier(0.4, 0, 0.6, 1) infinite reverse;
+    }
+    
+    @keyframes breathing-text {
+        0%, 100% {
+            content: 'Breathe In';
+            opacity: 1;
+        }
+        50% {
+            content: 'Breathe Out';
+            opacity: 1;
+        }
+    }
+    .animate-breathing-text::before {
+        content: 'Breathe In';
+        animation: breathing-text 5s ease-in-out infinite;
+    }
+}
