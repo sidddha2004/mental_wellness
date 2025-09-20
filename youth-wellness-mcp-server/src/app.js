@@ -37,9 +37,12 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200
 };
-
-app.use(cors(corsOptions));
-
+//app.use(cors(corsOptions));
+app.use(cors({
+  origin: '*'
+}));
+app.set('trust proxy', 1);
+//app.set('trust proxy', true);
 // Rate limiting configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

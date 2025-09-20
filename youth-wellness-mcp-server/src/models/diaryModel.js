@@ -1,5 +1,4 @@
 import { dbDiary } from '../services/firebaseDiary.js';
-import { collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
 class DiaryModel {
   constructor() {
@@ -26,7 +25,7 @@ class DiaryModel {
         }
       };
 
-      const docRef = await addDoc(collection(this.db, this.collectionName), entry);
+      const docRef = await this.db.collection(this.collectionName).add(entry);
       return { id: docRef.id, ...entry };
     } catch (error) {
       throw new Error(`Failed to create diary entry: ${error.message}`);
@@ -36,24 +35,22 @@ class DiaryModel {
   // Get diary entries for a user
   async getUserEntries(userId, options = {}) {
     try {
-      let q = query(
-        collection(this.db, this.collectionName),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+      let query = this.db.collection(this.collectionName)
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc');
 
       // Apply filters
       if (options.startDate) {
-        q = query(q, where('createdAt', '>=', options.startDate));
+        query = query.where('createdAt', '>=', options.startDate);
       }
       if (options.endDate) {
-        q = query(q, where('createdAt', '<=', options.endDate));
+        query = query.where('createdAt', '<=', options.endDate);
       }
       if (options.limit) {
-        q = query(q, limit(options.limit));
+        query = query.limit(options.limit);
       }
 
-      const snapshot = await getDocs(q);
+      const snapshot = await query.get();
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -66,10 +63,10 @@ class DiaryModel {
   // Get single entry by ID
   async getEntryById(entryId, userId) {
     try {
-      const docRef = doc(this.db, this.collectionName, entryId);
-      const docSnap = await getDoc(docRef);
+      const docRef = this.db.collection(this.collectionName).doc(entryId);
+      const docSnap = await docRef.get();
       
-      if (!docSnap.exists()) {
+      if (!docSnap.exists) {
         throw new Error('Entry not found');
       }
 
@@ -102,7 +99,7 @@ class DiaryModel {
         };
       }
 
-      await updateDoc(doc(this.db, this.collectionName, entryId), updates);
+      await this.db.collection(this.collectionName).doc(entryId).update(updates);
       return { id: entryId, ...entry, ...updates };
     } catch (error) {
       throw new Error(`Failed to update diary entry: ${error.message}`);
@@ -113,7 +110,7 @@ class DiaryModel {
   async deleteEntry(entryId, userId) {
     try {
       const entry = await this.getEntryById(entryId, userId);
-      await deleteDoc(doc(this.db, this.collectionName, entryId));
+      await this.db.collection(this.collectionName).doc(entryId).delete();
       
       // Also delete associated insights
       await this.deleteEntryInsights(entryId);
@@ -138,10 +135,10 @@ class DiaryModel {
         createdAt: new Date()
       };
 
-      const docRef = await addDoc(collection(this.db, this.insightsCollectionName), insightData);
+      const docRef = await this.db.collection(this.insightsCollectionName).add(insightData);
       
       // Mark entry as processed
-      await updateDoc(doc(this.db, this.collectionName, entryId), {
+      await this.db.collection(this.collectionName).doc(entryId).update({
         processed: true,
         processedAt: new Date()
       });
@@ -155,11 +152,9 @@ class DiaryModel {
   // Get insights for an entry
   async getEntryInsights(entryId) {
     try {
-      const q = query(
-        collection(this.db, this.insightsCollectionName),
-        where('entryId', '==', entryId)
-      );
-      const snapshot = await getDocs(q);
+      const query = this.db.collection(this.insightsCollectionName)
+        .where('entryId', '==', entryId);
+      const snapshot = await query.get();
       
       return snapshot.docs.map(doc => ({
         id: doc.id,
@@ -173,13 +168,11 @@ class DiaryModel {
   // Delete insights for an entry
   async deleteEntryInsights(entryId) {
     try {
-      const q = query(
-        collection(this.db, this.insightsCollectionName),
-        where('entryId', '==', entryId)
-      );
-      const snapshot = await getDocs(q);
+      const query = this.db.collection(this.insightsCollectionName)
+        .where('entryId', '==', entryId);
+      const snapshot = await query.get();
       
-      const batch = writeBatch(this.db);
+      const batch = this.db.batch();
       snapshot.docs.forEach(docSnapshot => {
         batch.delete(docSnapshot.ref);
       });
@@ -193,12 +186,10 @@ class DiaryModel {
   // Get unprocessed entries for AI analysis
   async getUnprocessedEntries(limit = 10) {
     try {
-      const q = query(
-        collection(this.db, this.collectionName),
-        where('processed', '==', false),
-        limit(limit)
-      );
-      const snapshot = await getDocs(q);
+      const query = this.db.collection(this.collectionName)
+        .where('processed', '==', false)
+        .limit(limit);
+      const snapshot = await query.get();
       
       return snapshot.docs.map(doc => ({
         id: doc.id,

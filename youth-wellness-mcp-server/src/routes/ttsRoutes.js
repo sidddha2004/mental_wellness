@@ -30,6 +30,13 @@ router.post('/', ttsController.synthesizeText);
 router.post('/ssml', ttsController.synthesizeSSML);
 
 /**
+ * POST /api/tts/live
+ * Convert text to speech on the spot using gTTS and stream audio response
+ * Body: { text: "string" }
+ */
+router.post('/live', ttsController.liveGttsTts);
+
+/**
  * GET /api/tts/download/:fileName
  * Download generated audio file
  */
@@ -97,9 +104,9 @@ const validateTextInput = (req, res, next) => {
   next();
 };
 
-// Apply validation middleware to synthesis routes
+// Apply validation middleware to synthesis routes (including new /live route)
 router.use('/', (req, res, next) => {
-  if (req.method === 'POST' && (req.path === '/' || req.path === '/ssml')) {
+  if (req.method === 'POST' && (req.path === '/' || req.path === '/ssml' || req.path === '/live')) {
     return validateTextInput(req, res, next);
   }
   next();

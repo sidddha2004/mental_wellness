@@ -1,6 +1,7 @@
 import ttsService from '../services/ttsService.js';
 import fs from 'fs';
 import path from 'path';
+import { exec } from 'child_process';
 
 class TtsController {
   /**
@@ -131,11 +132,11 @@ class TtsController {
 
       // Get file stats
       const stats = fs.statSync(filePath);
-      
+
       // Set appropriate headers
       const fileExtension = path.extname(fileName).toLowerCase();
       const contentType = fileExtension === '.wav' ? 'audio/wav' : 'audio/mpeg';
-      
+
       res.set({
         'Content-Type': contentType,
         'Content-Length': stats.size,
@@ -189,11 +190,11 @@ class TtsController {
 
       // Get file stats
       const stats = fs.statSync(filePath);
-      
+
       // Set appropriate headers for streaming
       const fileExtension = path.extname(fileName).toLowerCase();
       const contentType = fileExtension === '.wav' ? 'audio/wav' : 'audio/mpeg';
-      
+
       res.set({
         'Content-Type': contentType,
         'Content-Length': stats.size,
@@ -321,6 +322,83 @@ class TtsController {
       res.status(500).json({
         success: false,
         error: 'File cleanup failed',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Handle "on the spot" Text-to-Speech synthesis using gTTS Python script
+   * @param {object} req - Express request object
+   * @param {object} res - Express response object
+   */
+  async liveGttsTts(req, res) {
+    try {
+      const { text } = req.body;
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Text is required',
+          message: 'Please provide text to convert to speech on the spot'
+        });
+      }
+
+      const scriptPath = path.join(process.cwd(), 'gtts_on_spot.py');
+      const escapedText = text.replace(/"/g, '\\"');
+
+      exec(`python3 ${scriptPath} "${escapedText}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('Error executing gtts_on_spot.py:', error);
+          return res.status(500).json({
+            success: false,
+            error: 'TTS generation failed',
+            message: error.message,
+          });
+        }
+
+        const audioPath = stdout.trim();
+        const absoluteAudioPath = path.resolve(audioPath);
+
+        if (!fs.existsSync(absoluteAudioPath)) {
+          return res.status(500).json({
+            success: false,
+            error: 'Audio file not found',
+            message: 'Generated audio file not found on server'
+          });
+        }
+
+        res.set({
+          'Content-Type': 'audio/mpeg',
+          'Content-Disposition': 'attachment; filename="live_gtts.mp3"',
+          'Cache-Control': 'no-cache'
+        });
+
+        const readStream = fs.createReadStream(absoluteAudioPath);
+        readStream.pipe(res);
+
+        readStream.on('close', () => {
+          // Optional: delete file after streaming
+          // fs.unlinkSync(absoluteAudioPath);
+        });
+
+        readStream.on('error', (streamErr) => {
+          console.error('Stream error:', streamErr);
+          if (!res.headersSent) {
+            res.status(500).json({
+              success: false,
+              error: 'Error streaming audio',
+              message: streamErr.message
+            });
+          }
+        });
+      });
+
+    } catch (error) {
+      console.error('Error in liveGttsTts controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
         message: error.message
       });
     }

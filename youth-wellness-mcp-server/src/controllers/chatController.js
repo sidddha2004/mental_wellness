@@ -3,11 +3,12 @@ import mcpService  from '../services/mcpService.js'
 class ChatController {
   async sendMessage(req, res) {
     try {
-      const { message, userId, sessionId } = req.body;
+      const { message, sessionId } = req.body;
+      const userId = req.user.uid; // Get from authenticated user
 
-      if (!message || !userId) {
+      if (!message) {
         return res.status(400).json({
-          error: 'Message and userId are required'
+          error: 'Message is required'
         });
       }
 
@@ -46,7 +47,7 @@ class ChatController {
 
   async getUserSessions(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.uid; // Get from authenticated user
       
       const sessions = await mcpService.getChatSessions(userId);
       

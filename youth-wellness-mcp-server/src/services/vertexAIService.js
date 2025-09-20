@@ -38,15 +38,28 @@ class VertexAIService {
 
       const response = result.response;
       const generatedText = response.candidates[0].content.parts[0].text;
+      
+      //this part is to call the sos trigger button
+      const safetyRatings = response.candidates[0].safetyRatings || [];
+      
+      const flagged = safetyRatings.some(r => r.probability === 'MEDIUM' || r.probability === 'HIGH');
+      if (flagged) {
+        // you can replace response with a safe fallback message
+        // or trigger SOS/escalation
+        console.log("Safety ratings:", safetyRatings);
+      }
 
+       
       return {
         success: true,
         response: generatedText.trim(),
+        safety: safetyRatings,  // <--- ADD THIS
         metadata: {
           model: process.env.VERTEX_AI_MODEL,
           timestamp: new Date().toISOString()
         }
       };
+    
     } catch (error) {
       console.error('Error generating AI response:', error);
       throw error;
@@ -54,7 +67,7 @@ class VertexAIService {
   }
 
   buildSystemPrompt(userContext = {}) {
-    return `You are a supportive youth wellness chatbot designed to help teenagers and young adults with mental health, emotional wellness, and personal development.
+    return `You are a supportive youth wellness chatbot designed to help teenagers and young adults with mental health, emotional wellness, and personal development.Be concise and clear.
 
 Key Guidelines:
 - Be empathetic, supportive, and non-judgmental
@@ -63,6 +76,7 @@ Key Guidelines:
 - Use age-appropriate language
 - Focus on building resilience and positive mental health habits
 - Never provide medical diagnoses or replace professional therapy
+-Do not respond with very lengthy text(keep it clear and concise if possible)
 
 User Context:
 - Age Range: ${userContext.ageRange || 'Teen/Young Adult'}
@@ -129,20 +143,27 @@ Rules:
     const response = result.response.candidates[0].content.parts[0].text;
     console.log('Raw AI response:', response); // Debug log
     
-    // Clean the response to extract JSON
-    let cleanedResponse = response.trim();
-    
-    // Remove markdown code blocks if present
-    cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    
-    // Find JSON object in the response
-    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleanedResponse = jsonMatch[0];
-    }
-    
-    // Parse the JSON
-    const parsed = JSON.parse(cleanedResponse);
+        // Clean the response to extract JSON
+        let cleanedResponse = response.trim();
+
+        // Strip markdown if present
+        cleanedResponse = cleanedResponse
+          .replace(/```(?:json)?/g, '') // removes ```json or ```
+          .trim();
+
+        // Direct parse fallback
+        let parsed;
+        try {
+          parsed = JSON.parse(cleanedResponse);
+        } catch {
+          // Try to find JSON inside extra text
+          const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error("No valid JSON found");
+          }
+        }
     
     // Validate the structure
     const validSentiments = ['positive', 'neutral', 'negative'];
@@ -159,6 +180,42 @@ Rules:
     }
     if (typeof parsed.needsSupport !== 'boolean') {
       parsed.needsSupport = false;
+    }
+    
+    // HIGH URGENCY DETECTION - Trigger frontend alert
+    if (parsed.urgency === 'high' || parsed.needsSupport === true) {
+      console.log('🚨 HIGH URGENCY DETECTED:', parsed);
+      
+      // Check for false positives - add context validation
+      const hasCrisisKeywords = message.toLowerCase().includes('hurt') || 
+                               message.toLowerCase().includes('suicide') || 
+                               message.toLowerCase().includes('die') ||
+                               message.toLowerCase().includes('kill') ||
+                               message.toLowerCase().includes('end it all') ||
+                               message.toLowerCase().includes('no point');
+      
+      if (hasCrisisKeywords || parsed.emotions.some(e => ['despair', 'hopeless', 'suicidal'].includes(e.toLowerCase()))) {
+        parsed.triggerEmergencySupport = true;
+        parsed.emergencyLevel = 'critical';
+        // TODO: Trigger frontend emergency/crisis modal immediately
+        // TODO: Display suicide prevention helpline numbers
+        // TODO: Offer immediate crisis counseling resources
+      } else {
+        // Lower level support needed
+        parsed.triggerEmergencySupport = true;
+        parsed.emergencyLevel = 'support';
+        // TODO: Trigger frontend support modal
+        // TODO: Suggest talking to a counselor or trusted adult
+        // TODO: Display mental health resources
+      }
+    }
+
+    // Handle false positive reduction
+    if (parsed.urgency === 'high' && !parsed.triggerEmergencySupport) {
+      console.log('⚠️ High urgency detected but no emergency keywords found - possible false positive');
+      // Still provide support but less urgent
+      parsed.triggerEmergencySupport = true;
+      parsed.emergencyLevel = 'support';
     }
     
     return parsed;
