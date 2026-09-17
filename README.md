@@ -1,23 +1,30 @@
 # Mental Wellness Platform
 
-A full-stack mental wellness platform focused on helping young users build healthier emotional habits through guided support, journaling, and AI-powered companionship.
+A production-style full-stack platform for youth mental wellness, combining a modern web experience with AI-assisted backend services for conversational support, journaling, and voice features.
 
-## Project Overview
+## Overview
 
-This repository contains two core applications:
+This repository includes two primary applications:
 
-- **`/youth_wellness-front-end`** – a Next.js web app for user onboarding, dashboard experiences, and wellness interactions.
-- **`/youth-wellness-mcp-server`** – an Express.js backend that powers chat, diary, speech, and resource APIs.
+- **`/youth_wellness-front-end`** — Next.js frontend for authentication, dashboard experiences, and user interactions.
+- **`/youth-wellness-mcp-server`** — Express backend for chat, diary, wellness resources, and speech APIs.
 
-Together, they provide an integrated experience that includes:
+## Core Capabilities
 
-- Secure authentication with Firebase
-- AI companion chat
-- Daily diary and emotional insights
-- Community and wellness resource modules
-- Speech-to-text and text-to-speech capabilities
+- Firebase-based authentication and user identity flow
+- AI-powered wellness conversations
+- Daily diary entries with emotional insight support
+- Community/resource-driven wellness content
+- Speech-to-Text and Text-to-Speech API integration
 
----
+## Cloud & AI Integration
+
+The backend is connected to **Google Cloud Platform (GCP)** and is designed for AI-first conversational workflows:
+
+- **Dialogflow-aligned conversational architecture** for seamless chatbot experiences
+- **MCP server-based tool connectivity** for backend tool orchestration and extensibility
+- **Vertex AI integration** for response generation and sentiment-informed wellness assistance
+- **Firestore integration** for chat history, diary data, and structured wellness records
 
 ## Repository Structure
 
@@ -27,42 +34,38 @@ mental_wellness/
 └── youth-wellness-mcp-server/     # Node.js + Express backend
 ```
 
----
-
-## Tech Stack
+## Technology Stack
 
 ### Frontend
 - Next.js 15
 - React 18
 - TypeScript
 - Tailwind CSS
-- Firebase (client SDK)
+- Firebase Client SDK
 
 ### Backend
-- Node.js (ESM)
+- Node.js (ES Modules)
 - Express 5
 - Firebase Admin SDK
-- Google Cloud APIs (Vertex AI, Speech-to-Text, Text-to-Speech, Firestore)
+- Google Cloud APIs (Vertex AI, Firestore, Speech-to-Text, Text-to-Speech)
 
----
+## Quick Start
 
-## Getting Started
-
-### 1) Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/sidddha2004/mental_wellness.git
 cd mental_wellness
 ```
 
-### 2) Set up the frontend
+### 2. Frontend Setup
 
 ```bash
 cd youth_wellness-front-end
 npm install
 ```
 
-Create a `.env.local` file:
+Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=
@@ -80,16 +83,16 @@ Run the frontend:
 npm run dev
 ```
 
-The app runs on **http://localhost:9002** by default.
+Default frontend URL: **http://localhost:9002**
 
-### 3) Set up the backend
+### 3. Backend Setup
 
 ```bash
 cd ../youth-wellness-mcp-server
 npm install
 ```
 
-Create a `.env` file:
+Create `.env`:
 
 ```env
 PORT=8080
@@ -108,30 +111,26 @@ Run the backend:
 npm run dev
 ```
 
-Health check: **http://localhost:8080/health**
+Health endpoint: **http://localhost:8080/health**
 
----
-
-## Available Scripts
+## Scripts
 
 ### Frontend (`/youth_wellness-front-end`)
-- `npm run dev` – start development server
-- `npm run build` – production build
-- `npm run start` – start production server
-- `npm run lint` – lint frontend code
-- `npm run typecheck` – run TypeScript checks
+- `npm run dev` — start development server
+- `npm run build` — create production build
+- `npm run start` — run production server
+- `npm run lint` — run lint checks
+- `npm run typecheck` — run TypeScript checks
 
 ### Backend (`/youth-wellness-mcp-server`)
-- `npm run dev` – start with nodemon
-- `npm run start` – start production server
-- `npm run lint` – lint backend source
-- `npm run health-check` – run health check utility
+- `npm run dev` — run with nodemon
+- `npm run start` — run production server
+- `npm run lint` — run ESLint
+- `npm run health-check` — execute backend health check utility
 
----
+## API Surface
 
-## API Highlights
-
-Backend endpoints are organized under:
+Primary backend routes:
 
 - `/api/chat`
 - `/api/diary`
@@ -139,19 +138,16 @@ Backend endpoints are organized under:
 - `/api/stt`
 - `/api/tts`
 
-Additional service endpoints:
+Operational routes:
 
 - `/health`
 - `/api/status`
 
----
+## Operational Notes
 
-## Notes
-
-- This project uses Firebase authentication and Google Cloud services, so valid credentials are required for full functionality.
-- Keep `.env` and `.env.local` files out of version control.
-
----
+- Valid Firebase and GCP credentials are required for complete functionality.
+- Keep `.env` and `.env.local` out of source control.
+- Configure allowed origins before production deployment.
 
 ## License
 
